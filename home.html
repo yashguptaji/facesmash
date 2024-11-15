@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Images with Click Counter</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .image-wrapper {
+            position: relative;
+            text-align: center;
+        }
+
+        .click-count {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .image-container img {
+            width: 300px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .image-container img:hover {
+            transform: scale(1.05);
+        }
+
+        .winning-image {
+            width: 500px;
+            height: auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #message {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Random Images Game</h1>
+        <div id="clicksLeft">Clicks remaining: 10</div>
+        <div class="image-container" id="imageContainer">
+            <div class="image-wrapper">
+                
+                <img id="image1" src="" alt="Random Image 1" data-image-id="">
+            </div>
+            <div class="image-wrapper">
+                
+                <img id="image2" src="" alt="Random Image 2" data-image-id="">
+            </div>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        let MX = 448;
+        let clickCounter = 0;
+        let maxClicks = 10;
+        // Map to store clicks for each unique image ID
+        let imageClicks = new Map();
+
+        function getRandomImage() {
+            const randomIndex = Math.floor(Math.random() * MX) + 1;
+            return {
+                src: "img/img" + randomIndex + ".jpg",
+                id: randomIndex
+            };
+        }
+
+        function updateClicksRemaining() {
+            document.getElementById('clicksLeft').textContent = 
+                `Clicks remaining: ${maxClicks - clickCounter}`;
+        }
+
+        function updateClickCount(imageElement) {
+            const imageId = imageElement.dataset.imageId;
+            const count = imageClicks.get(imageId) || 0;
+            const countElement = imageElement.parentElement.querySelector('.click-count');
+            
+        }
+
+        function setRandomImage(elementId, excludeId = null) {
+            let newImage;
+            do {
+                newImage = getRandomImage();
+            } while (newImage.id === excludeId); // Ensure we don't show the same image twice
+
+            const imgElement = document.getElementById(elementId);
+            imgElement.src = newImage.src;
+            imgElement.dataset.imageId = newImage.id;
+            updateClickCount(imgElement);
+        }
+
+        function checkWinningImage() {
+            if (clickCounter >= maxClicks) {
+                let maxImageId = null;
+                let maxClicks = -1;
+
+                // Find the image with the most clicks
+                for (let [imageId, clicks] of imageClicks) {
+                    if (clicks > maxClicks) {
+                        maxClicks = clicks;
+                        maxImageId = imageId;
+                    }
+                }
+
+                // Create the winning image
+                const winningImageSrc = "img/img" + maxImageId + ".jpg";
+                document.getElementById('image1').classList.add('winning-image');
+                document.getElementById('image1').src = winningImageSrc;
+                document.getElementById('image2').parentElement.classList.add('hidden');
+                
+                document.getElementById('message').innerHTML = 
+                    `This is your pick!`;
+            }
+        }
+
+        // Initialize images
+        setRandomImage('image1');
+        setRandomImage('image2');
+
+        // Add click handlers
+        ['image1', 'image2'].forEach(imageId => {
+            document.getElementById(imageId).addEventListener('click', function() {
+                if (clickCounter < maxClicks) {
+                    const clickedImageId = this.dataset.imageId;
+                    
+                    // Update clicks for this specific image
+                    const currentClicks = imageClicks.get(clickedImageId) || 0;
+                    imageClicks.set(clickedImageId, currentClicks + 1);
+                    
+                    clickCounter++;
+                    updateClickCount(this);
+                    updateClicksRemaining();
+
+                    // Replace the OTHER image with a new random one
+                    const otherImageId = imageId === 'image1' ? 'image2' : 'image1';
+                    setRandomImage(otherImageId, clickedImageId);
+
+                    checkWinningImage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
